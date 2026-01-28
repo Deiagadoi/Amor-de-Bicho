@@ -17,6 +17,7 @@ O objetivo é permitir **cadastrar, editar, excluir e visualizar pets e tutores*
 
 ## Estrutura do Projeto
 
+```bash
 csrc/
 ├─ components/
 │ ├─ TutorForm.tsx # Formulário de cadastro/edição de tutores
@@ -27,8 +28,7 @@ csrc/
 │ ├─ tutorsService.ts # Métodos para tutores (CRUD + vinculação pets)
 ├─ App.tsx # Componente principal
 ├─ main.tsx # Entrada do React 
-
-
+```
 ---
 
 ## Funcionalidades Implementadas
