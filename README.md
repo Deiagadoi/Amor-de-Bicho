@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+# Amor de Bicho - SPA Front End
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Descrição do Projeto
+Este projeto é uma SPA (Single Page Application) em **React + TypeScript** que consome a API pública de registro de pets e tutores do Estado de Mato Grosso.  
+O objetivo é permitir **cadastrar, editar, excluir e visualizar pets e tutores**, além de vincular pets aos seus respectivos tutores.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tecnologias Utilizadas
+- React 18 + TypeScript  
+- Axios para consumo da API  
+- Tailwind CSS para estilização responsiva  
+- Vite como bundler e dev server  
+- React Hooks (`useState`, `useEffect`) para gerenciamento de estado local  
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Estrutura do Projeto
 
-## Expanding the ESLint configuration
+csrc/
+├─ components/
+│ ├─ TutorForm.tsx # Formulário de cadastro/edição de tutores
+│ ├─ Tutors.tsx # Listagem de tutores e vinculação de pets
+├─ services/
+│ ├─ authService.ts # Login e refresh de token
+│ ├─ petsService.ts # Métodos para pets (getPets)
+│ ├─ tutorsService.ts # Métodos para tutores (CRUD + vinculação pets)
+├─ App.tsx # Componente principal
+├─ main.tsx # Entrada do React 
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Funcionalidades Implementadas
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Pets
+- Listagem de pets em **cards responsivos** (foto, nome, espécie, idade)  
+- Busca por nome  
+- Paginação (10 por página)  
+- Detalhamento de pets (em desenvolvimento)  
+
+### Tutores
+- CRUD completo de tutores (`getTutors`, `getTutorById`, `createTutor`, `updateTutor`)  
+- Vinculação e desvinculação de pets com tutor (`linkPetToTutor`, `unlinkPetFromTutor`)  
+- Formulário de cadastro/edição com upload de foto  
+
+### Autenticação
+- Login via API (`authService.ts`)  
+- Token JWT gerenciado localmente  
+- Refresh token disponível  
+
+---
+
+## Como Executar
+
+### Pré-requisitos
+- Node.js >= 18  
+- npm >= 9  
+
+### Passos
+1. Clonar o repositório:  
+```bash
+git clone <url-do-repositorio>
+cd amor-de-bicho
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Instalar dependências:
+```bash
+npm install
+ ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Rodar o servidor de desenvolvimento:
+```bash
+npm run dev
+ ```
+ ### Abrir no navegador:
+ ```bash
+http://localhost:5173
+ ```
