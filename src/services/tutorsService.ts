@@ -1,4 +1,5 @@
 import axios from "axios";
+import { api } from "./api";
 
 const API_BASE_URL = "https://pet-manager-api.geia.vip";
 

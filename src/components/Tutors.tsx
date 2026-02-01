@@ -19,7 +19,7 @@ export function Tutors() {
     const fetchData = async () => {
       try {
         const tutorsData = await getTutors();
-        const petsData = await getPets(1, 50); // Pega até 50 pets
+        const petsData = await getPets(1, ''); // Pega até 50 pets
         setTutors(tutorsData);
         setPets(petsData);
         setLoading(false);

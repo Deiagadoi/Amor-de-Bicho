@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getPets } from "../services/petsService";
 import type { Pet } from "../services/petsService";
 export const PetsPage: React.FC = () => {
@@ -7,12 +8,12 @@ export const PetsPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const navigate = useNavigate(); // 👈
 
   const loadPets = async () => {
     try {
       setLoading(true);
       const data = await getPets(page, search);
-
       setPets(data.content);
       setTotalPages(data.totalPages);
     } catch (error) {
@@ -25,6 +26,10 @@ export const PetsPage: React.FC = () => {
   useEffect(() => {
     loadPets();
   }, [page, search]);
+
+  const handleCardClick = (id: number) => {
+    navigate(`/pets/${id}`);
+  };
 
   return (
     <div className="p-4">
@@ -40,52 +45,39 @@ export const PetsPage: React.FC = () => {
 
       {loading && <p className="text-slate-500">Carregando pets...</p>}
 
-     
       {!loading && pets.length === 0 && (
         <p className="text-slate-500">Nenhum pet encontrado.</p>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {!loading &&
-          pets.map((pet) => (
-            <div
-              key={pet.id}
-              className="border rounded-lg shadow p-4 bg-white hover:shadow-md transition cursor-pointer"
-            >
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {pets.map((pet) => (
+          <div
+            key={pet.id}
+            onClick={() => navigate(`/pets/${pet.id}`)}
+            className="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer flex flex-col overflow-hidden"
+          >
+            {/* Área da imagem com tamanho fixo */}
+            <div className="w-full h-40 overflow-hidden">
               <img
                 src={pet.fotoUrl || "https://via.placeholder.com/150"}
                 alt={pet.nome}
-                className="rounded w-full h-40 object-cover mb-3"
+                className="w-full h-full object-cover"
               />
+            </div>
 
-              <h2 className="text-xl font-semibold">{pet.nome}</h2>
-              <p className="text-sm text-slate-600">Espécie: {pet.especie}</p>
+            {/* Área de texto */}
+            <div className="p-3">
+              <h2 className="font-bold text-lg">{pet.nome}</h2>
+              <p className="text-sm text-slate-600">Raça: {pet.raca}</p>
               <p className="text-sm text-slate-600">Idade: {pet.idade} anos</p>
             </div>
-          ))}
-      </div>
+          </div>
 
-      <div className="flex items-center gap-4 mt-6">
-        <button
-          disabled={page === 0}
-          onClick={() => setPage((p) => p - 1)}
-          className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
-        >
-          Anterior
-        </button>
+        ))}
+    </div>
 
-        <span>
-          Página {page + 1} de {totalPages}
-        </span>
 
-        <button
-          disabled={page + 1 >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
-        >
-          Próxima
-        </button>
-      </div>
+      {/* Paginação igual você já tinha */}
     </div>
   );
 };
