@@ -15,7 +15,6 @@ export function Tutors() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar tutores e pets ao montar o componente
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -33,11 +32,9 @@ export function Tutors() {
     fetchData();
   }, []);
 
-  // Vincular pet a tutor
   const handleLinkPet = async (tutorId: number, petId: number) => {
     const success = await linkPetToTutor(tutorId, petId);
     if (success) {
-      // Atualiza a lista local de tutores
       setTutors((prev) =>
         prev.map((t) =>
           t.id === tutorId
@@ -51,7 +48,6 @@ export function Tutors() {
     }
   };
 
-  // Desvincular pet do tutor
   const handleUnlinkPet = async (tutorId: number, petId: number) => {
     const success = await unlinkPetFromTutor(tutorId, petId);
     if (success) {

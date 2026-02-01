@@ -1,4 +1,3 @@
-// src/services/tutorsService.ts
 import axios from "axios";
 
 const API_BASE_URL = "https://pet-manager-api.geia.vip";
@@ -12,7 +11,6 @@ export interface Tutor {
   pets?: { id: number; nome: string }[];
 }
 
-// GET /v1/tutores
 export const getTutors = async (): Promise<Tutor[]> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/v1/tutores`);
@@ -23,7 +21,6 @@ export const getTutors = async (): Promise<Tutor[]> => {
   }
 };
 
-// GET /v1/tutores/:id
 export const getTutorById = async (id: number): Promise<Tutor | null> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/v1/tutores/${id}`);
@@ -34,7 +31,6 @@ export const getTutorById = async (id: number): Promise<Tutor | null> => {
   }
 };
 
-// POST /v1/tutores - aceita FormData
 export const createTutor = async (tutorData: FormData): Promise<Tutor | null> => {
   try {
     const response = await axios.post(`${API_BASE_URL}/v1/tutores`, tutorData, {
@@ -49,7 +45,6 @@ export const createTutor = async (tutorData: FormData): Promise<Tutor | null> =>
   }
 };
 
-// PUT /v1/tutores/:id - aceita FormData
 export const updateTutor = async (id: number, tutorData: FormData): Promise<Tutor | null> => {
   try {
     const response = await axios.put(`${API_BASE_URL}/v1/tutores/${id}`, tutorData, {
@@ -64,7 +59,6 @@ export const updateTutor = async (id: number, tutorData: FormData): Promise<Tuto
   }
 };
 
-// POST /v1/tutores/:tutorId/pets/:petId
 export const linkPetToTutor = async (tutorId: number, petId: number): Promise<boolean> => {
   try {
     await axios.post(`${API_BASE_URL}/v1/tutores/${tutorId}/pets/${petId}`);
@@ -75,7 +69,6 @@ export const linkPetToTutor = async (tutorId: number, petId: number): Promise<bo
   }
 };
 
-// DELETE /v1/tutores/:tutorId/pets/:petId
 export const unlinkPetFromTutor = async (tutorId: number, petId: number): Promise<boolean> => {
   try {
     await axios.delete(`${API_BASE_URL}/v1/tutores/${tutorId}/pets/${petId}`);
