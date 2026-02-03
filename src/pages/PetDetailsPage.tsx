@@ -5,39 +5,13 @@ import type { Pet } from "../services/petsService";
 import { getTutorById } from "../services/tutorsService";
 import type { Tutor } from "../services/tutorsService";
 
-interface RouteParams {
-  id?: string;
-}
-
 export const PetDetailsPage: React.FC = () => {
   const { id } = useParams();
   const [pet, setPet] = useState<Pet | null>(null);
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [loading, setLoading] = useState(true);
 
-//   useEffect(() => {
-//     const loadData = async () => {
-//       if (!id) return;
-//       try {
-//         setLoading(true);
-//         const petData = await getPetById(Number(id));
-//         setPet(petData);
-
-//         if (petData.id) {
-//           const tutorData = await getTutorById(petData.id);
-//           setTutor(tutorData);
-//         }
-//       } catch (error) {
-//         console.error("Erro ao carregar detalhes do pet:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     loadData();
-//   }, [id]);
-
-useEffect(() => {
+  useEffect(() => {
     const loadData = async () => {
       if (!id) return;
 
@@ -47,8 +21,8 @@ useEffect(() => {
         const petData = await getPetById(Number(id));
         setPet(petData);
 
-        // se houver pelo menos um tutor vinculado, busca detalhes via /v1/tutores/{id}
-        const firstTutorId = petData.tutorIds[0];
+        // ✅ usa 'tutores' em vez de 'tutorIds'
+        const firstTutorId = petData.tutores?.[0]?.id;
         if (firstTutorId) {
           const tutorData = await getTutorById(firstTutorId);
           setTutor(tutorData);
@@ -95,16 +69,15 @@ useEffect(() => {
       </Link>
 
       <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col md:flex-row gap-6">
-      <div className="md:w-1/3 flex justify-center">
-        <div className="w-full max-w-xs h-64 overflow-hidden rounded-xl border shadow-sm">
+        <div className="md:w-1/3 flex justify-center">
+          <div className="w-full max-w-xs h-64 overflow-hidden rounded-xl border shadow-sm">
             <img
-            src={pet.fotoUrl || "https://via.placeholder.com/300"}
-            alt={pet.nome}
-            className="w-full h-full object-cover"
+              src={pet.fotoUrl || "https://via.placeholder.com/300"}
+              alt={pet.nome}
+              className="w-full h-full object-cover"
             />
+          </div>
         </div>
-        </div>
-
 
         <div className="md:w-2/3 space-y-3">
           {/* 🔹 Destaque ao nome do pet (requisito do edital) */}
@@ -113,23 +86,17 @@ useEffect(() => {
           </h1>
 
           <p className="text-sm text-slate-600">
-            <span className="font-semibold">Espécie:</span> {pet.raca}
+            <span className="font-semibold">Raça / Espécie:</span> {pet.raca}
           </p>
           <p className="text-sm text-slate-600">
             <span className="font-semibold">Idade:</span> {pet.idade} anos
           </p>
-          {pet.raca && (
-            <p className="text-sm text-slate-600">
-              <span className="font-semibold">Raça:</span> {pet.raca}
-            </p>
-          )}
 
           {tutor && (
             <div className="mt-4 border-t pt-4">
               <h2 className="text-lg font-bold mb-2">Tutor</h2>
               <p className="text-sm text-slate-700">
-                <span className="font-semibold">Nome:</span>{" "}
-                {tutor.nome ?? tutor.nome}
+                <span className="font-semibold">Nome:</span> {tutor.nome}
               </p>
               <p className="text-sm text-slate-700">
                 <span className="font-semibold">Telefone:</span>{" "}
