@@ -25,111 +25,100 @@ export const LoginPage = () => {
       await login(username, password);
       navigate(from, { replace: true });
     } catch (error) {
-  const message =
-    error instanceof Error
-      ? error.message
-      : "Erro ao realizar login. Tente novamente.";
-  alert(message);
-}
-
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao realizar login. Tente novamente.";
+      alert(message);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-100 via-slate-100 to-emerald-100">
-      <div className="w-full max-w-5xl mx-4 bg-white/90 backdrop-blur-md shadow-2xl rounded-3xl overflow-hidden border border-slate-200">
-        <div className="grid grid-cols-1 md:grid-cols-2">
-          {/* Lado esquerdo – texto e “branding” */}
-          <div className="hidden md:flex flex-col justify-between bg-sky-900 text-sky-50 px-10 py-10">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-sky-800/70 px-3 py-1 text-xs font-medium tracking-wide">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
-                Sistema de Registro de Pets
-              </span>
-             
-            </div>
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-sky-900 px-4 text-slate-900 overflow-hidden">
+      {/* fundo azul com detalhe no canto inferior direito */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute bottom-0 right-0 w-56 h-40 opacity-30">
+          <div className="absolute bottom-4 right-0 h-1 w-40 bg-sky-800 rounded-full" />
+          <div className="absolute bottom-7 right-4 h-1 w-36 bg-sky-800 rounded-full" />
+          <div className="absolute bottom-10 right-8 h-1 w-32 bg-sky-800 rounded-full" />
+        </div>
+      </div>
 
-            <div className="mt-8 flex items-center gap-3 text-xs text-sky-100/70">
-              <div className="flex -space-x-2">
-                <div className="h-8 w-8 rounded-full bg-sky-700 border border-sky-600 flex items-center justify-center text-[10px] font-semibold">
-                  🐶
-                </div>
-                <div className="h-8 w-8 rounded-full bg-sky-700 border border-sky-600 flex items-center justify-center text-[10px] font-semibold">
-                  🐱
-                </div>
-              </div>
-              <span>
-                Acesso restrito a usuários autorizados.
-                <br />
-                Use suas credenciais fornecidas pela equipe.
-              </span>
-            </div>
-          </div>
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mx-auto rounded-3xl bg-white shadow-xl border border-sky-100 px-8 py-8 sm:px-10 sm:py-9">
+          <h1 className="mb-6 text-center text-sm font-medium text-slate-600">
+            Login
+          </h1>
 
-          {/* Lado direito – formulário */}
-          <div className="px-6 py-8 sm:px-10 sm:py-10">
-            <div className="mb-6 md:hidden">
-              <h1 className="text-2xl font-extrabold text-slate-900">
-                Amor de Bicho
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                Faça login para gerenciar Pets e Tutores.
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1">
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-medium text-slate-700"
-                >
-                  Usuário
-                </label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Usuário */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="username"
+                className="block text-xs font-medium text-slate-600"
+              >
+                Login
+              </label>
+              <div className="relative">
                 <input
                   id="username"
                   type="text"
-                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  className="w-full rounded-full border border-sky-100 bg-sky-50 px-4 pr-10 py-2.5 text-sm text-slate-700 placeholder:text-sky-300 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-200"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
                   required
+                  placeholder="Login"
                 />
               </div>
+            </div>
 
-              <div className="space-y-1">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-slate-700"
-                >
-                  Senha
-                </label>
+            {/* Senha */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="password"
+                className="block text-xs font-medium text-slate-600"
+              >
+                Senha
+              </label>
+              <div className="relative">
                 <input
                   id="password"
                   type="password"
-                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  className="w-full rounded-full border border-sky-100 bg-sky-50 px-4 pr-10 py-2.5 text-sm text-slate-700 placeholder:text-sky-300 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-200"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   required
+                  placeholder="Senha"
                 />
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? "Entrando..." : "Entrar"}
-              </button>
-            </form>
+            {/* Botão */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Entrando..." : "Login"}
+            </button>
+          </form>
+        </div>
 
-            <p className="mt-6 text-xs text-slate-400">
-              Este ambiente é destinado exclusivamente à avaliação técnica.
-              <br className="hidden sm:block" />
-              Os dados de acesso devem ser utilizados de forma segura.
-            </p>
-          </div>
+        {/* Rodapé parecido com o modelo */}
+        <div className="mt-6 text-center text-[11px] text-sky-100 space-y-1">
+          <p>Amor de Bicho - Sistema de Gestão de Pets e Tutores</p>
+          <p>
+            Suporte:{" "}
+            <span className="underline underline-offset-2">
+              contato@amordebicho.com
+            </span>
+          </p>
         </div>
       </div>
     </div>
   );
 };
+
