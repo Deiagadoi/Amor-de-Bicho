@@ -1,102 +1,89 @@
-// import { api } from "./api";
-
-// export interface Pet {
-//   id: number;
-//   nome: string;
-//   especie: string;
-//   idade: number;
-//   foto?: string;
-// }
-
-// export const getPets = async (page: number, search: string) => {
-//   const params: any = {
-//     page,
-//     size: 10,
-//   };
-
-//   if (search) {
-//     params.nome = search;
-//   }
-
-//   const response = await api.get("/v1/pets", { params });
-
-//   return response.data; 
-// };
-
-// export const getPetById = async (id: number): Promise<Pet> => {
-//   const response = await api.get(`/v1/pets/${id}`);
-//   return response.data;
-// };
 import { api } from "./api";
 
-// Formato que vem da API
-interface PetApi {
+export interface PetPhoto {
   id: number;
   nome: string;
-  raca: string;
-  idade: number;
-  foto?: {
-    id: number;
-    nome: string;
-    contentType: string;
-    url: string;
-  };
-  tutores?: {
-    id: number;
-    nome: string;
-    email: string;
-    telefone: string;
-    endereco: string;
-    cpf: number;
-    foto?: {
-      id: number;
-      nome: string;
-      contentType: string;
-      url: string;
-    };
-  }[];
+  contentType: string;
+  url: string;
 }
 
-// Formato que vamos usar no front
 export interface Pet {
   id: number;
   nome: string;
   raca: string;
   idade: number;
-  fotoUrl?: string;
-  tutorIds: number[]; // para buscar tutor depois, se quiser
+  foto?: PetPhoto | null;
+
+  tutores?: Array<{
+    id: number;
+    nome: string;
+    telefone: string;
+    endereco: string;
+    email: string;
+    cpf: number;
+  }>;
+  fotoUrl?: string | null;
 }
 
-const mapPet = (data: PetApi): Pet => ({
-  id: data.id,
-  nome: data.nome,
-  raca: data.raca,
-  idade: data.idade,
-  fotoUrl: data.foto?.url,             // 👈 AQUI está a URL da foto
-  tutorIds: data.tutores?.map((t) => t.id) ?? [],
-});
-
-export const getPets = async (page: number, search: string) => {
-  const params: any = {
-    page,
-    size: 10,
-  };
-
-  if (search) {
-    params.nome = search;
-  }
+/** LISTAR PETS (com paginação e busca) */
+export const getPets = async (page: number = 0, search: string = "") => {
+  const params: any = { page, size: 10 };
+  if (search) params.nome = search;
 
   const response = await api.get("/v1/pets", { params });
 
-  const content = (response.data.content as PetApi[]).map(mapPet);
+  const pets = response.data.content.map((p: Pet) => ({
+    ...p,
+    fotoUrl: p.foto?.url ?? null,
+  }));
 
   return {
     ...response.data,
-    content,
+    content: pets,
   };
 };
 
+/** BUSCAR PET POR ID */
 export const getPetById = async (id: number): Promise<Pet> => {
   const response = await api.get(`/v1/pets/${id}`);
-  return mapPet(response.data as PetApi);
+  const pet = response.data;
+
+  return {
+    ...pet,
+    fotoUrl: pet.foto?.url ?? null,
+  };
+};
+
+/** CRIAR PET */
+export const createPet = async (data: {
+  nome: string;
+  idade: number;
+  raca: string;
+}) => {
+  const resp = await api.post("/v1/pets", data);
+  return resp.data;
+};
+
+/** ATUALIZAR PET */
+export const updatePet = async (
+  id: number,
+  data: { nome: string; idade: number; raca: string }
+) => {
+  const resp = await api.put(`/v1/pets/${id}`, data);
+  return resp.data;
+};
+
+export const uploadPetPhoto = async (id: number, file: File) => {
+  const formData = new FormData();
+  formData.append("foto", file);
+
+  const resp = await api.post(`/v1/pets/${id}/fotos`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return resp.data;
+};
+
+export const deletePet = async (id: number): Promise<void> => {
+  await api.delete(`/v1/pets/${id}`);
 };
