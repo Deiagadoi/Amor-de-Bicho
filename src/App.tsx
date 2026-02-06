@@ -1,44 +1,152 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import { ProtectedRoute } from "./routes/ProtectedRoute";
-import { LoginPage } from "./pages/LoginPage";
-import { PetsPage } from "./pages/PetsPage";
-import { TutorsPage } from "./pages/TutorsPage";
-import { PetDetailsPage } from "./pages/PetDetailsPage";
-import { PetFormPage } from "./pages/PetFormPage";
-import { TutorFormPage } from "./pages/TutorFormPage";
-import { TutorPetsPage } from "./pages/TutorPetsPage";
+// src/App.tsx
+import React, { Suspense } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
-const App: React.FC = () => {
+import { AuthProvider } from "./context/AuthContext";
+import { Layout } from "./components/Layout";
+import { PrivateRoute } from "./components/PrivateRoute";
+
+// =========================
+// Lazy loaded pages
+// =========================
+
+// Login
+const LoginPage = React.lazy(() =>
+  import("./pages/LoginPage").then((m) => ({ default: m.LoginPage }))
+);
+
+// Pets
+const PetsPage = React.lazy(() =>
+  import("./pages/PetsPage").then((m) => ({ default: m.PetsPage }))
+);
+
+const PetFormPage = React.lazy(() =>
+  import("./pages/PetFormPage").then((m) => ({ default: m.PetFormPage }))
+);
+
+const PetDetailsPage = React.lazy(() =>
+  import("./pages/PetDetailsPage").then((m) => ({ default: m.PetDetailsPage }))
+);
+
+// Tutores
+const TutorsPage = React.lazy(() =>
+  import("./pages/TutorsPage").then((m) => ({ default: m.TutorsPage }))
+);
+
+const TutorFormPage = React.lazy(() =>
+  import("./pages/TutorFormPage").then((m) => ({ default: m.TutorFormPage }))
+);
+
+const TutorPetsPage = React.lazy(() =>
+  import("./pages/TutorPetsPage").then((m) => ({ default: m.TutorPetsPage }))
+);
+
+// =========================
+// App component
+// =========================
+
+export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Rota pública */}
-          <Route path="/login" element={<LoginPage />} />
+      <BrowserRouter>
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center text-slate-600">
+              Carregando...
+            </div>
+          }
+        >
+          <Routes>
+            {/* rota pública */}
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Rotas protegidas */}
-          <Route element={<ProtectedRoute />}>
-            {/* Home = lista de pets */}
-            <Route path="/" element={<PetsPage />} />
+            {/* rotas protegidas */}
+            <Route element={<PrivateRoute />}>
+              {/* redireciona / para /pets */}
+              <Route path="/" element={<Navigate to="/pets" replace />} />
 
-            {/* Pets */}
-            <Route path="/pets" element={<PetsPage />} />
-            <Route path="/pets/novo" element={<PetFormPage />} />
-            <Route path="/pets/:id" element={<PetDetailsPage />} />
-            <Route path="/pets/:id/editar" element={<PetFormPage />} />
+              {/* Pets */}
+              <Route
+                path="/pets"
+                element={
+                  <Layout>
+                    <PetsPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/pets/novo"
+                element={
+                  <Layout>
+                    <PetFormPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/pets/:id"
+                element={
+                  <Layout>
+                    <PetDetailsPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/pets/:id/editar"
+                element={
+                  <Layout>
+                    <PetFormPage />
+                  </Layout>
+                }
+              />
 
-            {/* Tutores */}
-            <Route path="/tutores" element={<TutorsPage />} />
-            <Route path="/tutores/novo" element={<TutorFormPage />} />
-            <Route path="/tutores/:id/editar" element={<TutorFormPage />} />
-            <Route path="/tutores/:id/pets" element={<TutorPetsPage />} />
-          </Route>
-        </Routes>
-      </Router>
+              {/* Tutores */}
+              <Route
+                path="/tutores"
+                element={
+                  <Layout>
+                    <TutorsPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/tutores/novo"
+                element={
+                  <Layout>
+                    <TutorFormPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/tutores/:id/editar"
+                element={
+                  <Layout>
+                    <TutorFormPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/tutores/:id/pets"
+                element={
+                  <Layout>
+                    <TutorPetsPage />
+                  </Layout>
+                }
+              />
+            </Route>
+
+            {/* fallback: qualquer rota desconhecida → /pets */}
+            <Route path="*" element={<Navigate to="/pets" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
     </AuthProvider>
   );
 };
 
+// ⚠️ IMPORTANTE: default export para o main.tsx
 export default App;
