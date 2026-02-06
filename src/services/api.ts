@@ -2,6 +2,7 @@ import axios from "axios";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 const API_BASE_URL = "/api";
+//const API_BASE_URL = "https://pet-manager-api.geia.vip";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,6 +12,7 @@ export const api = axios.create({
   },
 });
 
+// Controle para evitar múltiplos refresh ao mesmo tempo
 let isRefreshing = false;
 let failedQueue: {
   resolve: (value?: unknown) => void;
@@ -29,6 +31,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+// Interceptor de REQUEST → adiciona Authorization em todas as chamadas (menos login/refresh)
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("token");
@@ -46,6 +49,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Interceptor de RESPONSE → trata 401 e tenta refresh
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -58,11 +62,13 @@ api.interceptors.response.use(
 
       const refreshToken = localStorage.getItem("refreshToken");
 
+      // Se não tiver refresh token, não tem o que fazer → rejeita
       if (!refreshToken) {
         processQueue(error, null);
         return Promise.reject(error);
       }
 
+      // Se já estiver atualizando, coloca essa requisição na fila
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({
@@ -80,30 +86,44 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        // ⚠️ AQUI é o ponto crítico: a API espera "refresh_token"
         const response = await api.put("/autenticacao/refresh", {
-          refreshToken,
+          refresh_token: refreshToken,
         });
 
-        const newAccessToken =
-          (response.data as any).accessToken || (response.data as any).token;
-        const newRefreshToken = (response.data as any).refreshToken;
+        const {
+          access_token,
+          refresh_token,
+        }: {
+          access_token: string;
+          refresh_token?: string;
+        } = (response.data || {}) as any;
 
-        localStorage.setItem("token", newAccessToken);
-        if (newRefreshToken) {
-          localStorage.setItem("refreshToken", newRefreshToken);
+        if (!access_token) {
+          throw new Error("Novo token de acesso não retornado no refresh.");
         }
 
-        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+        // Salva novos tokens
+        localStorage.setItem("token", access_token);
+        if (refresh_token) {
+          localStorage.setItem("refreshToken", refresh_token);
+        }
 
-        processQueue(null, newAccessToken);
+        // Atualiza Authorization padrão
+        api.defaults.headers.common.Authorization = `Bearer ${access_token}`;
 
+        // Libera a fila de requisições pendentes
+        processQueue(null, access_token);
+
+        // Atualiza a requisição original e reenvia
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${access_token}`;
         }
 
         return api(originalRequest);
       } catch (err) {
         processQueue(err, null);
+        // Se o refresh falhar, limpa os tokens → usuário terá que logar de novo
         localStorage.removeItem("token");
         localStorage.removeItem("refreshToken");
         return Promise.reject(err);
