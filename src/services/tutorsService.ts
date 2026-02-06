@@ -1,81 +1,106 @@
-import axios from "axios";
+// src/services/tutorsService.ts
 import { api } from "./api";
-
-const API_BASE_URL = "https://pet-manager-api.geia.vip";
+import type { Pet } from "./petsService";
 
 export interface Tutor {
   id: number;
   nome: string;
   telefone: string;
   endereco: string;
-  foto?: string; // a API espera string (URL da foto)
-  pets?: { id: number; nome: string }[];
+  fotoUrl?: string | null;
+  pets?: Pet[];
 }
 
-export const getTutors = async (): Promise<Tutor[]> => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/v1/tutores`);
-    return response.data;
-  } catch (error: any) {
-    console.error("Erro ao buscar tutores:", error);
-    return [];
+export interface PagedTutors {
+  content: Tutor[];
+  totalPages: number;
+  totalElements: number;
+}
+
+/* =========================================
+   LISTAR TUTORES (com paginação da API)
+========================================= */
+export const getTutors = async (
+  page = 0,
+  size = 10,
+  search = ""
+): Promise<PagedTutors> => {
+  const params: Record<string, unknown> = {
+    page,
+    size,
+  };
+
+  // só manda o filtro se tiver texto
+  if (search.trim()) {
+    // a API espera "nome" como parâmetro de busca
+    params.nome = search.trim();
   }
+
+  const response = await api.get("/v1/tutores", { params });
+  return response.data;
 };
 
-export const getTutorById = async (id: number): Promise<Tutor | null> => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/v1/tutores/${id}`);
-    return response.data;
-  } catch (error: any) {
-    console.error(`Erro ao buscar tutor ${id}:`, error);
-    return null;
-  }
+/* =========================================
+   BUSCAR POR ID
+========================================= */
+export const getTutorById = async (id: number): Promise<Tutor> => {
+  const response = await api.get(`/v1/tutores/${id}`);
+  return response.data;
 };
 
-export const createTutor = async (tutorData: FormData): Promise<Tutor | null> => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/v1/tutores`, tutorData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    console.error("Erro ao criar tutor:", error);
-    return null;
-  }
+/* =========================================
+   CRIAR
+========================================= */
+export const createTutor = async (data: FormData): Promise<Tutor> => {
+  const response = await api.post("/v1/tutores", data, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+
+  return response.data;
 };
 
-export const updateTutor = async (id: number, tutorData: FormData): Promise<Tutor | null> => {
-  try {
-    const response = await axios.put(`${API_BASE_URL}/v1/tutores/${id}`, tutorData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    console.error(`Erro ao atualizar tutor ${id}:`, error);
-    return null;
-  }
+/* =========================================
+   ATUALIZAR
+========================================= */
+export const updateTutor = async (
+  id: number,
+  data: FormData
+): Promise<Tutor> => {
+  const response = await api.put(`/v1/tutores/${id}`, data, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+
+  return response.data;
 };
 
-export const linkPetToTutor = async (tutorId: number, petId: number): Promise<boolean> => {
-  try {
-    await axios.post(`${API_BASE_URL}/v1/tutores/${tutorId}/pets/${petId}`);
-    return true;
-  } catch (error: any) {
-    console.error(`Erro ao vincular pet ${petId} ao tutor ${tutorId}:`, error);
-    return false;
-  }
+/* =========================================
+   FOTO DO TUTOR
+========================================= */
+export const uploadTutorPhoto = async (
+  tutorId: number,
+  file: File
+): Promise<void> => {
+
+  const formData = new FormData();
+  formData.append("foto", file);
+
+  await api.post(`/v1/tutores/${tutorId}/fotos`, formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
 };
 
-export const unlinkPetFromTutor = async (tutorId: number, petId: number): Promise<boolean> => {
-  try {
-    await axios.delete(`${API_BASE_URL}/v1/tutores/${tutorId}/pets/${petId}`);
-    return true;
-  } catch (error: any) {
-    console.error(`Erro ao desvincular pet ${petId} do tutor ${tutorId}:`, error);
-    return false;
-  }
+/* =========================================
+   VÍNCULO PET → TUTOR
+========================================= */
+export const linkPetToTutor = async (tutorId: number, petId: number) => {
+  await api.post(`/v1/tutores/${tutorId}/pets/${petId}`);
+};
+
+export const unlinkPetFromTutor = async (tutorId: number, petId: number) => {
+  await api.delete(`/v1/tutores/${tutorId}/pets/${petId}`);
+};
+
+// NOVO
+export const deleteTutor = async (id: number): Promise<void> => {
+  await api.delete(`/v1/tutores/${id}`);
 };
