@@ -25,18 +25,10 @@ export const getTutors = async (
   size = 10,
   search = ""
 ): Promise<PagedTutors> => {
-  const params: Record<string, unknown> = {
-    page,
-    size,
-  };
+  const response = await api.get("/v1/tutores", {
+    params: { page, size, search }
+  });
 
-  // só manda o filtro se tiver texto
-  if (search.trim()) {
-    // a API espera "nome" como parâmetro de busca
-    params.nome = search.trim();
-  }
-
-  const response = await api.get("/v1/tutores", { params });
   return response.data;
 };
 
