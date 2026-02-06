@@ -1,8 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getTutorById, linkPetToTutor, unlinkPetFromTutor } from "../services/tutorsService";
-import { getPets } from "../services/petsService";
+
+import {
+  getTutorById,
+  linkPetToTutor,
+  unlinkPetFromTutor,
+} from "../services/tutorsService";
+
+
 import type { Tutor } from "../services/tutorsService";
+
+
+import { getPets } from "../services/petsService";
 import type { Pet } from "../services/petsService";
 
 export const TutorPetsPage: React.FC = () => {
@@ -10,118 +19,135 @@ export const TutorPetsPage: React.FC = () => {
   const tutorId = Number(id);
 
   const [tutor, setTutor] = useState<Tutor | null>(null);
-  const [allPets, setAllPets] = useState<Pet[]>([]);
+  const [linkedPets, setLinkedPets] = useState<{ id: number; nome: string }[]>(
+    []
+  );
+  const [availablePets, setAvailablePets] = useState<Pet[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [searchPet, setSearchPet] = useState("");
 
-  // Carrega tutor + lista de pets
+  // Carregar dados do tutor + pets vinculados
+  const loadTutorAndLinkedPets = async () => {
+    if (!tutorId) return;
+
+    try {
+      
+      setLoading(true);
+      const tutorData = await getTutorById(tutorId);
+      setTutor(tutorData);
+      setLinkedPets(tutorData.pets ?? []);
+    } catch (error) {
+      console.error("Erro ao carregar tutor:", error);
+      alert("Erro ao carregar dados do tutor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carregar lista de pets para vincular
+  const loadAvailablePets = async () => {
+    try {
+      const resp = await getPets(0, searchPet);
+      setAvailablePets(resp.content);
+    } catch (error) {
+      console.error("Erro ao carregar lista de pets para vincular:", error);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      if (!tutorId) return;
-
-      try {
-        setLoading(true);
-
-        const tutorData = await getTutorById(tutorId);
-        setTutor(tutorData);
-
-        // busca a primeira página de pets para vinculação
-        const petsResponse = await getPets(0, "");
-        setAllPets(petsResponse.content ?? petsResponse);
-      } catch (error) {
-        console.error("Erro ao carregar dados do tutor/pets:", error);
-        alert("Erro ao carregar dados do tutor e pets.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadData();
+    void loadTutorAndLinkedPets();
   }, [tutorId]);
 
-  const linkedPets = tutor?.pets ?? [];
+  useEffect(() => {
+    void loadAvailablePets();
+  }, [searchPet]);
 
-  // Filtra pets disponíveis pela busca
-  const filteredPets: Pet[] = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return allPets;
+  const handleLinkPet = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    return allPets.filter((p) => p.nome.toLowerCase().includes(term));
-  }, [allPets, search]);
-
-  const isPetLinked = (petId: number) =>
-    linkedPets.some((lp) => lp.id === petId);
-
-  const handleLink = async (petId: number) => {
-    if (!tutorId) return;
+    if (!tutorId || !selectedPetId) {
+      alert("Selecione um pet para vincular.");
+      return;
+    }
 
     try {
-      setSaving(true);
+      setLinking(true);
+      const petId = Number(selectedPetId);
+
       await linkPetToTutor(tutorId, petId);
 
-      // atualiza tutor em memória
-      const pet = allPets.find((p) => p.id === petId);
+      const pet = availablePets.find((p) => p.id === petId);
+
       if (pet) {
-        setTutor((prev) =>
-          prev
-            ? {
-                ...prev,
-                pets: [...(prev.pets ?? []), { id: pet.id, nome: pet.nome }],
-              }
-            : prev
-        );
+        setLinkedPets((prev) => {
+          const jaExiste = prev.some((lp) => lp.id === pet.id);
+          if (jaExiste) return prev;
+          return [...prev, { id: pet.id, nome: pet.nome }];
+        });
       }
+
+      alert("Pet vinculado ao tutor com sucesso!");
+      setSelectedPetId("");
     } catch (error) {
-      console.error("Erro ao vincular pet:", error);
-      alert("Erro ao vincular pet ao tutor.");
+      console.error("Erro ao vincular pet ao tutor:", error);
+      alert("Erro ao vincular pet. Tente novamente.");
     } finally {
-      setSaving(false);
+      setLinking(false);
     }
   };
 
-  const handleUnlink = async (petId: number) => {
+  const handleUnlinkPet = async (petId: number) => {
     if (!tutorId) return;
 
-    if (!confirm("Deseja realmente remover esse vínculo?")) return;
+    const confirmar = window.confirm(
+      "Tem certeza que deseja remover o vínculo deste pet com o tutor?"
+    );
+
+    if (!confirmar) return;
 
     try {
-      setSaving(true);
       await unlinkPetFromTutor(tutorId, petId);
 
-      setTutor((prev) =>
-        prev
-          ? {
-              ...prev,
-              pets: (prev.pets ?? []).filter((p) => p.id !== petId),
-            }
-          : prev
-      );
+      setLinkedPets((prev) => prev.filter((p) => p.id !== petId));
+
+      alert("Vínculo removido com sucesso!");
     } catch (error) {
       console.error("Erro ao remover vínculo:", error);
-      alert("Erro ao remover vínculo do pet.");
-    } finally {
-      setSaving(false);
+      alert("Erro ao remover vínculo. Tente novamente.");
     }
   };
 
-  if (loading) {
+  if (!tutorId) {
     return (
-      <div className="max-w-5xl mx-auto py-6">
-        <p className="text-slate-500">Carregando dados do tutor...</p>
+      <div className="p-4">
+        <p className="text-red-600 text-sm">
+          ID do tutor inválido na URL.
+        </p>
+      </div>
+    );
+  }
+
+  if (loading && !tutor) {
+    return (
+      <div className="p-4">
+        <p className="text-slate-500 text-sm">
+          Carregando dados do tutor...
+        </p>
       </div>
     );
   }
 
   if (!tutor) {
     return (
-      <div className="max-w-5xl mx-auto py-6 space-y-2">
-        <p className="text-red-600 font-semibold">
+      <div className="p-4">
+        <p className="text-red-600 text-sm">
           Tutor não encontrado.
         </p>
         <Link
           to="/tutores"
-          className="text-sky-600 hover:underline text-sm"
+          className="text-sky-600 hover:underline text-sm mt-2 inline-block"
         >
           ← Voltar para lista de tutores
         </Link>
@@ -130,139 +156,111 @@ export const TutorPetsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-6 space-y-4">
-      {/* Link voltar */}
-      <Link
-        to="/tutores"
-        className="text-sky-600 hover:text-sky-800 text-sm font-semibold inline-flex items-center"
-      >
-        ← Voltar para lista de tutores
-      </Link>
-
-      <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">
-              Gerenciar Pets do Tutor
-            </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              Tutor: <span className="font-semibold">{tutor.nome}</span>
-            </p>
-          </div>
-
-          {saving && (
-            <span className="text-xs text-amber-600 font-medium">
-              Salvando alterações...
-            </span>
-          )}
+    <div className="space-y-4">
+     
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <Link
+            to="/tutores"
+            className="text-sky-600 hover:underline text-sm inline-flex items-center gap-1"
+          >
+            ← Voltar para lista de tutores
+          </Link>
+          <h1 className="text-2xl font-extrabold tracking-tight mt-2">
+            Gerenciar Pets do Tutor
+          </h1>
+          <p className="text-sm text-slate-500">
+            Tutor: <span className="font-semibold">{tutor.nome}</span>
+          </p>
         </div>
+      </div>
 
-        {/* Bloco 1: Pets vinculados */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Pets vinculados
+     
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+       
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+          <h2 className="text-lg font-semibold mb-3">
+            Pets vinculados a {tutor.nome}
           </h2>
 
-          {linkedPets.length === 0 ? (
+          {linkedPets.length === 0 && (
             <p className="text-sm text-slate-500">
               Nenhum pet vinculado a este tutor.
             </p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {linkedPets.map((pet) => (
-                <div
-                  key={pet.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {pet.nome}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      ID: {pet.id}
-                    </p>
-                  </div>
+          )}
 
+          {linkedPets.length > 0 && (
+            <ul className="space-y-2">
+              {linkedPets.map((pet) => (
+                <li
+                  key={pet.id}
+                  className="flex items-center justify-between text-sm border border-slate-100 rounded-lg px-3 py-2"
+                >
+                  <span>{pet.nome}</span>
                   <button
                     type="button"
-                    onClick={() => handleUnlink(pet.id)}
-                    disabled={saving}
-                    className="text-xs rounded-md bg-rose-50 px-3 py-1 font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+                    onClick={() => void handleUnlinkPet(pet.id)}
+                    className="text-red-600 hover:underline text-xs font-semibold"
                   >
-                    Remover
+                    Remover vínculo
                   </button>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </section>
+        </div>
 
-        <hr className="border-slate-200" />
+       
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
+          <h2 className="text-lg font-semibold">
+            Vincular novo pet a {tutor.nome}
+          </h2>
 
-        {/* Bloco 2: Vincular novo pet */}
-        <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Vincular novo Pet
-            </h2>
-
+       
+          <div>
+            <label className="block mb-1 text-sm font-medium text-slate-700">
+              Buscar pets pelo nome
+            </label>
             <input
               type="text"
-              placeholder="Buscar pet por nome..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-sm w-full sm:w-72 shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-600 focus:border-teal-600"
+              value={searchPet}
+              onChange={(e) => setSearchPet(e.target.value)}
+              placeholder="Digite o nome do pet..."
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-600 focus:border-teal-600"
             />
+            <p className="mt-1 text-xs text-slate-500">
+              A lista abaixo será filtrada por este nome.
+            </p>
           </div>
 
-          {filteredPets.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              Nenhum pet encontrado para vinculação.
-            </p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {filteredPets.map((pet) => {
-                const alreadyLinked = isPetLinked(pet.id);
-
-                return (
-                  <div
-                    key={pet.id}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm flex flex-col justify-between"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-slate-900">
-                        {pet.nome}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Raça: {pet.raca || "-"}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Idade: {pet.idade} anos
-                      </p>
-                    </div>
-
-                    <div className="mt-3">
-                      {alreadyLinked ? (
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                          Já vinculado
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleLink(pet.id)}
-                          disabled={saving}
-                          className="w-full rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                        >
-                          Vincular
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          <form onSubmit={handleLinkPet} className="space-y-3">
+            <div>
+              <label className="block mb-1 text-sm font-medium text-slate-700">
+                Selecionar pet
+              </label>
+              <select
+                value={selectedPetId}
+                onChange={(e) => setSelectedPetId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-600 focus:border-teal-600"
+              >
+                <option value="">-- Selecione um pet --</option>
+                {availablePets.map((pet) => (
+                  <option key={pet.id} value={pet.id}>
+                    {pet.nome} {pet.raca ? `(${pet.raca})` : ""}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
-        </section>
+
+            <button
+              type="submit"
+              disabled={linking}
+              className="inline-flex items-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {linking ? "Vinculando..." : "Vincular pet ao tutor"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

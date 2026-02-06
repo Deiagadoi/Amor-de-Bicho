@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import {
   createTutor,
   updateTutor,
-  getTutorById
+  getTutorById,
 } from "../services/tutorsService";
-import type { Tutor } from "../services/tutorsService";
+
 interface TutorFormProps {
   tutorId?: number; // se existir, é edição
   onSuccess?: () => void; // callback após salvar
@@ -25,7 +25,7 @@ export function TutorForm({ tutorId, onSuccess }: TutorFormProps) {
       const fetchTutor = async () => {
         try {
           const data = await getTutorById(tutorId);
-          if (data) { // ✅ verifica se não é null
+          if (data) {
             setNome(data.nome);
             setTelefone(data.telefone);
             setEndereco(data.endereco);
@@ -37,11 +37,11 @@ export function TutorForm({ tutorId, onSuccess }: TutorFormProps) {
           setError("Erro ao carregar tutor");
         }
       };
-      fetchTutor();
+      void fetchTutor();
     }
   }, [tutorId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -60,7 +60,7 @@ export function TutorForm({ tutorId, onSuccess }: TutorFormProps) {
         await createTutor(formData);
       }
 
-      if (onSuccess) onSuccess();
+      onSuccess?.();
 
       // limpa formulário
       setNome("");
@@ -76,7 +76,7 @@ export function TutorForm({ tutorId, onSuccess }: TutorFormProps) {
   };
 
   return (
-    <div className="p-4 border rounded shadow max-w-md">
+    <div className="p-4 border rounded shadow max-w-md bg-white">
       <h2 className="text-xl font-bold mb-4">
         {tutorId ? "Editar Tutor" : "Cadastrar Novo Tutor"}
       </h2>
@@ -111,7 +111,9 @@ export function TutorForm({ tutorId, onSuccess }: TutorFormProps) {
           type="file"
           accept="image/*"
           onChange={(e) => {
-            if (e.target.files && e.target.files[0]) setFoto(e.target.files[0]);
+            if (e.target.files && e.target.files[0]) {
+              setFoto(e.target.files[0]);
+            }
           }}
           className="border p-2 rounded"
         />
@@ -119,7 +121,7 @@ export function TutorForm({ tutorId, onSuccess }: TutorFormProps) {
         <button
           type="submit"
           className={`bg-blue-500 text-white py-2 rounded font-semibold ${
-            loading ? "opacity-50" : ""
+            loading ? "opacity-50 cursor-not-allowed" : ""
           }`}
           disabled={loading}
         >
